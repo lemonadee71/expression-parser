@@ -41,8 +41,9 @@ let operators = {
   },
 }
 
-let test = '5-6/2+3*4',
-  currentNode = new Node('(') 
+let test =  '5-6/2+3*4' || '4^3^2*5',
+  currentNode = new Node('('), 
+  tree 
 
 function Node(x) {
   this.node = x
@@ -56,14 +57,16 @@ function Node(x) {
 const compute = (expr) => {
   let nodes = expr.split('').map(char => new Node(char))
   nodes.forEach(node => traverseTree(currentNode, node))
-  console.log(currentNode.parent.parent.parent)
-  console.log(parseTree(currentNode))
+  tree = parseTree(currentNode).rightChild
+  console.log(tree)
 }
 
 const traverseTree = (current, newNode) => {
-  console.log(current.node)
+  let condition = newNode.node === '^' 
+                ? newNode.precedence < current.precedence 
+                : newNode.precedence <= current.precedence
 
-  if (newNode.precedence <= current.precedence) {   
+  if (condition) {   
     traverseTree(current.parent, newNode)
   } else {
     newNode.leftChild = current.rightChild
@@ -80,7 +83,7 @@ const traverseTree = (current, newNode) => {
 
 const parseTree = (node) => {
   if (node.parent) {
-    parseTree(node.parent)
+    return parseTree(node.parent)
   }
   return node
 }
