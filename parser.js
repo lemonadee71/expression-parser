@@ -61,7 +61,7 @@ let operators = {
   }
 }
 
-let test = '6+(-3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '4^3^2*5',
+let test = '-cos(10)*3+(5+2)^2' || '6+(-3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '4^3^2*5',
   currentNode = new Node('('), 
   tree = null
 
@@ -103,14 +103,11 @@ const calculator = (type, x, y) => {
     case 'negative':
       return -1 * (x || y)
     case 'sin':
-      sin(x || y)
-      break;
+      return Math.sin(x || y)
     case 'cos':
-      cos(x || y)
-      break;
+      return Math.cos(x || y)
     case 'tan':
-      tan(x || y)
-      break;
+      return Math.tan(x || y)
   }
 }
 
