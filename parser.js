@@ -61,7 +61,7 @@ let operators = {
   }
 }
 
-let test = '-cos(10)*3+(5+2)^2' || '6+(-3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '4^3^2*5',
+let test = '4!*3' || '-cos(10)*3+(5+2)^2' || '6+(-3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '4^3^2*5',
   currentNode = new Node('('), 
   tree = null
 
@@ -121,7 +121,7 @@ const parse = (expr) => {
     prev
 
   while(expr) {
-    let match = expr.match(/^\d+/) || expr.match(/^[a-z]+/)
+    let match = expr.match(/^[\d.]+/) || expr.match(/^[a-z]+/)
     
     if (match) {
       if (isNaN(match[0])) {
@@ -129,7 +129,7 @@ const parse = (expr) => {
         expr = expr.replace(/^[a-z]+/, '')
       } else {
         nodes.push(new Node(match[0]))
-        expr = expr.replace(/^\d+/, '')
+        expr = expr.replace(/^[\d.]+/, '')
       }
     } else {
       let operator = expr.charAt(0)
@@ -143,7 +143,7 @@ const parse = (expr) => {
       prev = operator
     }
   }
-  console.log(nodes)
+
   nodes.forEach(node => insertToTree(currentNode, node))
   tree = getRoot(currentNode).rightChild
   tree.parent = null
