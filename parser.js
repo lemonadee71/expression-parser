@@ -61,7 +61,7 @@ let operators = {
   }
 }
 
-let test =  'sin(50-2)^3!^-4!' || '6+(3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '5-6/(2+3*4)' || '4^3^2*5',
+let test = '6+(-3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '4^3^2*5',
   currentNode = new Node('('), 
   tree = null
 
@@ -76,41 +76,52 @@ function Node(x) {
 }
 
 const compute = (node) => {
-  if (node.type === 'function') {
-    // call function
-    // functions take two parameters or one if not operator function
-    // calculator(node.text, node.leftChild, node.rightChild)
-    // function[node.text](compute(node.leftChild), compute(node.rightChild))
-  } 
+  if (node.type === 'function')
+    return calculator(node.text, node.leftChild, node.rightChild)
 
+  console.log(node.node)
   return parseFloat(node.node)
 }
 
 const calculator = (type, x, y) => {
+  x = x ? compute(x) : null
+  y = y ? compute(y) : null
+
   switch(type) {
     case 'add':
-      add(x, y)
-      break;
+      return x + y;
     case 'subtract':
-      subtract(x, y)
-      break;
+      return x - y;
     case 'multiply':
-      multiply(x, y)
-      break; 
+      return x * y;
     case 'divide':
-      divide(x, y)
-      break;
+      return x / y;
     case 'exponent':
-      exponent(x, y)
-      break; 
+      return x ** y; 
     case 'factorial':
-      factorial(x, y)
-      break;  
+      return factorial(x || y)
+    case 'negative':
+      return -1 * (x || y)
+    case 'sin':
+      sin(x || y)
+      break;
+    case 'cos':
+      cos(x || y)
+      break;
+    case 'tan':
+      tan(x || y)
+      break;
   }
 }
 
+const factorial = (n) => {
+  if (n === 1) return 1
+  return n * factorial(n - 1)
+}
+
 const parse = (expr) => {
-  let nodes = []
+  let nodes = [],
+    prev
 
   while(expr) {
     let match = expr.match(/^\d+/) || expr.match(/^[a-z]+/)
@@ -125,15 +136,22 @@ const parse = (expr) => {
       }
     } else {
       let operator = expr.charAt(0)
-      nodes.push(new Node(operator))
+
+      if (!'()'.includes(prev) && operator === '-') {
+        nodes.push(new Node('ve'))
+      } else {
+        nodes.push(new Node(operator))
+      }      
       expr = expr.replace(operator, '')
+      prev = operator
     }
   }
-
+  console.log(nodes)
   nodes.forEach(node => insertToTree(currentNode, node))
   tree = getRoot(currentNode).rightChild
   tree.parent = null
   console.log(tree)
+  console.log(compute(tree))
 }
 
 const insertToTree = (current, newNode) => {
@@ -141,11 +159,12 @@ const insertToTree = (current, newNode) => {
                 ? newNode.precedence < current.precedence 
                 : newNode.precedence <= current.precedence
 
+  /*
   if (current.type !== 'parenthesis' && current.type !== 'number' && newNode.text === 'subtract') {
-    console.log(current.text, newNode.text) 
+    console.log(current, newNode) 
     newNode = new Node('ve')
   }
-
+  */
   if (newNode.node === ')') {
     deleteNode(current)
     return;
