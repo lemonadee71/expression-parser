@@ -46,7 +46,7 @@ let operators = {
   },
 }
 
-let test =  '((4*3)^2)/2' || '4*(3-2)+5' || '5-6/(2+3*4)' || '4^3^2*5',
+let test =  '(5-2)^3!^-4!' || '6+(3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '5-6/(2+3*4)' || '4^3^2*5',
   currentNode = new Node('('), 
   tree = null
 
@@ -60,10 +60,45 @@ function Node(x) {
   this.rightChild = null
 }
 
-const compute = (expr) => {
+const compute = (node) => {
+  if (node.type === 'function') {
+    // call function
+    // functions take two parameters or one if not operator function
+    // calculator(node.text, node.leftChild, node.rightChild)
+    // function[node.text](compute(node.leftChild), compute(node.rightChild))
+  } 
+
+  return parseFloat(node.node)
+}
+
+const calculator = (type, x, y) => {
+  switch(type) {
+    case 'add':
+      add(x, y)
+      break;
+    case 'subtract':
+      subtract(x, y)
+      break;
+    case 'multiply':
+      multiply(x, y)
+      break; 
+    case 'divide':
+      divide(x, y)
+      break;
+    case 'exponent':
+      exponent(x, y)
+      break; 
+    case 'factorial':
+      factorial(x, y)
+      break;  
+  }
+}
+
+const parse = (expr) => {
   let nodes = expr.split('').map(char => new Node(char))
   nodes.forEach(node => insertToTree(currentNode, node))
   tree = getRoot(currentNode).rightChild
+  tree.parent = null
   console.log(tree)
 }
 
@@ -72,12 +107,17 @@ const insertToTree = (current, newNode) => {
                 ? newNode.precedence < current.precedence 
                 : newNode.precedence <= current.precedence
 
+  if (current.type !== 'parenthesis' && current.type !== 'number' && newNode.text === 'subtract') {
+    console.log(current.text, newNode.text) 
+    newNode = new Node('ve')
+  }
+
   if (newNode.node === ')') {
     deleteNode(current)
     return;
   }
 
-  if (newNode.type !== 'parenthesis' && condition) {   
+  if (newNode.text !== 'negative' && newNode.type !== 'parenthesis' && condition) {   
     insertToTree(current.parent, newNode)
   } else {
     newNode.leftChild = current.rightChild
@@ -113,4 +153,4 @@ const getRoot = (node) => {
   return node
 }
 
-document.addEventListener('load', compute(test))
+document.addEventListener('load', parse(test))
