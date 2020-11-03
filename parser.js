@@ -1,36 +1,36 @@
-let operators = {
+let operatorList = {
   '(': {
-    type: 'parenthesis',
-    text: 'parenthesis',
+    type: 'bracket',
+    text: 'bracket',
     precedence: 1
   },
   ')': {
-    type: 'parenthesis',
-    text: 'parenthesis',
+    type: 'bracket',
+    text: 'bracket',
     precedence: 1
   },
   '+': {
-    type: 'function',
+    type: 'operator',
     text: 'add',
     precedence: 2
   },
   '-': {
-    type: 'function',
+    type: 'operator',
     text: 'subtract',
     precedence: 2
   },
   've': {
-    type: 'function',
+    type: 'operator',
     text: 'negative',
     precedence: 3
   },
   '*': {
-    type: 'function',
+    type: 'operator',
     text: 'multiply',
     precedence: 4
   },
   '/': {
-    type: 'function',
+    type: 'operator',
     text: 'divide',
     precedence: 4
   },
@@ -66,25 +66,23 @@ let operators = {
   },
 }
 
-let test = '' || '-cos(10)*3+(5+2)^2' || '6+(-3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '4^3^2*5',
-  currentNode = new Node('('), 
+let test = '2+1+4/2' || '-cos(10)*3+(5+2)^2' || '6+(-3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '4^3^2*5',
   tree = null
+  currentNode = new Node('(')
 
 function Node(x) {
   this.node = x
-  this.text = isNaN(this.node) ? operators[x].text : 'number'
-  this.type = isNaN(this.node) ? operators[x].type : 'number'
-  this.precedence = isNaN(this.node) ? operators[x].precedence : 7
   this.parent = null
   this.leftChild = null
   this.rightChild = null
+  this.text = isNaN(this.node) ? operatorList[x].text : 'constant'
+  this.type = isNaN(this.node) ? operatorList[x].type : 'constant'
+  this.precedence = isNaN(this.node) ? operatorList[x].precedence : 7
 }
 
 const compute = (node) => {
-  if (node.type === 'function')
+  if (node.type === 'function' || node.type === 'operator')
     return calculator(node.text, node.leftChild, node.rightChild)
-
-  console.log(node.node)
   return parseFloat(node.node)
 }
 
@@ -139,57 +137,66 @@ const parse = (expr) => {
           nodes.push(new Node(match[0]))
           expr = expr.replace(/^[a-z]+/, '')
         } else {         
-
           nodes.push(new Node(match[0]))
           expr = expr.replace(/^[\d.]+/, '')
         }
+
+        prev = match[0]
       } else {
         let operator = expr.charAt(0)
 
-        if (!'()'.includes(prev) && operator === '-') {
+        if (operator === '-' && !'()'.includes(prev) && isNaN(prev)) {
           nodes.push(new Node('ve'))
         } else {
           nodes.push(new Node(operator))
         }      
+
         expr = expr.replace(operator, '')
         prev = operator
       }
-    }
+    }   
 
-    nodes.forEach(node => insertToTree(currentNode, node))
-    tree = getRoot(currentNode).rightChild
-    tree.parent = null
-    console.log(nodes)
-    console.log(tree)
-    console.log(compute(tree))
+    //nodes.forEach(node => insertToTree(currentNode, node))
+    //tree = getRoot(currentNode).rightChild
+    //tree.parent = null
+    //console.log(tree)
+    //console.log(compute(tree))
+    createTree(nodes)
   } catch(error) {
     console.log(error)
   }
   
 }
 
-const insertToTree = (current, newNode) => {
-  let condition = newNode.node === '^' 
-                ? newNode.precedence < current.precedence 
-                : newNode.precedence <= current.precedence
+const createTree = (nodes) => {
+  let expressionTree = nodes.reduce((tree, node) => {
+    console.log(tree, node)
+    return insertToTree(tree, node)
+  }, new Node('('))
+ 
+  //expressionTree = getRoot(tree).rightChild
+  //expressionTree.parent = null
+  
+  console.log(expressionTree)
+  //console.log(compute(expressionTree))  
+}
 
-  /*
-  if (current.type !== 'parenthesis' && current.type !== 'number' && newNode.text === 'subtract') {
-    console.log(current, newNode) 
-    newNode = new Node('ve')
-  }
-  */
+const insertToTree = (currentNode, newNode) => {
+  let condition = newNode.node === '^' || newNode.node === '√'
+                ? newNode.precedence < currentNode.precedence 
+                : newNode.precedence <= currentNode.precedence
+
   if (newNode.node === ')') {
-    deleteNode(current)
-    return;
+    currentNode = deleteNode(currentNode)
+    return currentNode
   }
 
-  if (newNode.text !== 'negative' && newNode.type !== 'parenthesis' && condition) {   
-    insertToTree(current.parent, newNode)
+  if (newNode.text !== 'negative' && newNode.type !== 'bracket' && condition) {   
+    insertToTree(currentNode.parent, newNode)
   } else {
-    newNode.leftChild = current.rightChild
-    current.rightChild = newNode
-    newNode.parent = current
+    newNode.leftChild = currentNode.rightChild
+    currentNode.rightChild = newNode
+    newNode.parent = currentNode
     
     if (newNode.leftChild) {
       newNode.leftChild.parent = newNode
@@ -197,20 +204,23 @@ const insertToTree = (current, newNode) => {
 
     currentNode = newNode
   }
+
+  return currentNode
 }
 
-const deleteNode = (current) => {
-  let openingParen = climbTree(current)
+const deleteNode = (currentNode) => {
+  let openingParen = climbTree(currentNode)
   openingParen.rightChild.parent = openingParen.parent
   openingParen.parent.rightChild = openingParen.rightChild
-  currentNode = openingParen.parent
+  return openingParen.parent
+  //currentNode = openingParen.parent
 }
 
-const climbTree = (current) => {
-  if (current.parent.type !== 'parenthesis') {
-    return climbTree(current.parent)
+const climbTree = (currentNode) => {
+  if (currentNode.parent.type !== 'bracket') {
+    return climbTree(currentNode.parent)
   }
-  return current.parent
+  return currentNode.parent
 }
 
 const getRoot = (node) => {
