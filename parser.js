@@ -91,7 +91,12 @@ const parse = (expr) => {
 
           nodes.push(new Node(match[0]))
           expr = expr.replace(/^[a-z]+/, '')
-        } else {         
+        } else {       
+          // for cases like (3)3 and sin(30)3
+          if (prev && prev === ')') {
+            throw 'SyntaxError'
+          }
+
           nodes.push(new Node(match[0]))
           expr = expr.replace(/^[\d.]+/, '')
         }
@@ -99,7 +104,20 @@ const parse = (expr) => {
         prev = match[0]
       } else {
         let operator = expr.charAt(0)
+        
+        // for cases like 3(3) and 3sin(30)
+        if (prev && !isNaN(prev) && '(√sincostan'.includes(char)) {
+          nodes.push(new Node('*'))
+        } 
 
+        // for cases like 3(3)√4 and 3sin(30)
+        // for cases like (3)(3) and sin(30)(3)
+        if (prev && prev === ')' && '√sincostan'.includes(char)) {
+          nodes.push(new Node('*'))
+        } else if (prev && prev === ')' && char === '(') {
+          nodes.push(new Node('*'))
+        }
+        
         if (operator === '-' && !'()'.includes(prev) && isNaN(prev)) {
           nodes.push(new Node('ve'))
         } else {
