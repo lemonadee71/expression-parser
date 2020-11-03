@@ -114,6 +114,7 @@ const parse = (expr) => {
     return createTree(nodes)
   } catch(error) {
     console.log(error)
+    return error
   }
   
 }
@@ -127,7 +128,7 @@ const createTree = (nodes) => {
 
   expressionTree = expressionTree.rightChild
   expressionTree.parent = null
-  console.log(expressionTree)
+  
   return expressionTree
 }
 
