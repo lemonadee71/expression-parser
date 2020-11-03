@@ -66,10 +66,6 @@ let operatorList = {
   },
 }
 
-let test = '2+1+4/2' || '-cos(10)*3+(5+2)^2' || '6+(-3*2)-(9-3)/3' || '((4*3)^2)/2' || '4*(3-2)+5' || '4^3^2*5',
-  tree = null
-  currentNode = new Node('(')
-
 function Node(x) {
   this.node = x
   this.parent = null
@@ -78,47 +74,6 @@ function Node(x) {
   this.text = isNaN(this.node) ? operatorList[x].text : 'constant'
   this.type = isNaN(this.node) ? operatorList[x].type : 'constant'
   this.precedence = isNaN(this.node) ? operatorList[x].precedence : 7
-}
-
-const compute = (node) => {
-  if (node.type === 'function' || node.type === 'operator')
-    return calculator(node.text, node.leftChild, node.rightChild)
-  return parseFloat(node.node)
-}
-
-const calculator = (type, x, y) => {
-  x = x ? compute(x) : null
-  y = y ? compute(y) : null
-
-  switch(type) {
-    case 'add':
-      return x + y;
-    case 'subtract':
-      return x - y;
-    case 'multiply':
-      return x * y;
-    case 'divide':
-      return x / y;
-    case 'exponent':
-      return x ** y; 
-    case 'factorial':
-      return factorial(x || y)
-    case 'negative':
-      return -1 * (x || y)
-    case 'sin':
-      return Math.sin(x || y)
-    case 'cos':
-      return Math.cos(x || y)
-    case 'tan':
-      return Math.tan(x || y)
-    case 'sqrt':
-      return Math.sqrt(x || y)
-  }
-}
-
-const factorial = (n) => {
-  if (n === 1) return 1
-  return n * factorial(n - 1)
 }
 
 const parse = (expr) => {
@@ -156,12 +111,7 @@ const parse = (expr) => {
       }
     }   
 
-    //nodes.forEach(node => insertToTree(currentNode, node))
-    //tree = getRoot(currentNode).rightChild
-    //tree.parent = null
-    //console.log(tree)
-    //console.log(compute(tree))
-    createTree(nodes)
+    return createTree(nodes)
   } catch(error) {
     console.log(error)
   }
@@ -169,16 +119,16 @@ const parse = (expr) => {
 }
 
 const createTree = (nodes) => {
-  let expressionTree = nodes.reduce((tree, node) => {
-    console.log(tree, node)
-    return insertToTree(tree, node)
-  }, new Node('('))
- 
-  //expressionTree = getRoot(tree).rightChild
-  //expressionTree.parent = null
+  let expressionTree = nodes.reduce((tree, node) => insertToTree(tree, node), new Node('('))
   
+  while(expressionTree.parent) {
+    expressionTree = expressionTree.parent
+  }
+
+  expressionTree = expressionTree.rightChild
+  expressionTree.parent = null
   console.log(expressionTree)
-  //console.log(compute(expressionTree))  
+  return expressionTree
 }
 
 const insertToTree = (currentNode, newNode) => {
@@ -187,12 +137,11 @@ const insertToTree = (currentNode, newNode) => {
                 : newNode.precedence <= currentNode.precedence
 
   if (newNode.node === ')') {
-    currentNode = deleteNode(currentNode)
-    return currentNode
+    return deleteNode(currentNode)
   }
 
   if (newNode.text !== 'negative' && newNode.type !== 'bracket' && condition) {   
-    insertToTree(currentNode.parent, newNode)
+    return insertToTree(currentNode.parent, newNode)
   } else {
     newNode.leftChild = currentNode.rightChild
     currentNode.rightChild = newNode
@@ -202,10 +151,8 @@ const insertToTree = (currentNode, newNode) => {
       newNode.leftChild.parent = newNode
     }
 
-    currentNode = newNode
+    return newNode
   }
-
-  return currentNode
 }
 
 const deleteNode = (currentNode) => {
@@ -213,7 +160,6 @@ const deleteNode = (currentNode) => {
   openingParen.rightChild.parent = openingParen.parent
   openingParen.parent.rightChild = openingParen.rightChild
   return openingParen.parent
-  //currentNode = openingParen.parent
 }
 
 const climbTree = (currentNode) => {
@@ -222,12 +168,3 @@ const climbTree = (currentNode) => {
   }
   return currentNode.parent
 }
-
-const getRoot = (node) => {
-  if (node.parent) {
-    return getRoot(node.parent)
-  }
-  return node
-}
-
-document.addEventListener('load', parse(test))
